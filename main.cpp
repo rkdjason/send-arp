@@ -53,7 +53,7 @@ int get_IP(char *interface, Ip *myIP) {
 	}
 
 	struct sockaddr_in* ip = (struct sockaddr_in*)&ifr.ifr_addr;
-	*myIP = Ip(ip->sin_addr.s_addr);
+	*myIP = Ip(ntohl(ip->sin_addr.s_addr));
 
 	close(fd);
 	return 0;
@@ -83,8 +83,9 @@ void send_ARP_req(pcap_t *pcap, Ip srcIP, Mac srcMAC, Ip dstIP) {
         }
 }
 
-Mac recv_ARP_rep(pcap_t *pcap, Ip srcIP) {
-	while (true) {
+Mac recv_ARP_rep(pcap_t *pcap, Ip srcIP, int repeat = 1000) {
+
+	while (repeat--) {
 		struct pcap_pkthdr* header;
 		const u_char* packet;
 		int res = pcap_next_ex(pcap, &header, &packet);
@@ -159,7 +160,7 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 	printf("[*] my MAC addr : %s\n", std::string(myMAC).c_str());
-	printf("[*] my IP addr : %s\n\n", std::string(myIP).c_str());
+	printf("[*] my IP addr : %s\n", std::string(myIP).c_str());
 	
 
 	for(int i = 2; i < argc; i += 2){
@@ -169,7 +170,7 @@ int main(int argc, char* argv[]) {
 
 		send_ARP_req(pcap, myIP, myMAC, senderIP);
 		senderMAC = recv_ARP_rep(pcap, senderIP);
-		printf("[-] sender%d MAC addr : %s\n\n", i / 2, std::string(senderMAC).c_str());
+		printf("[-] sender%d MAC addr : %s\n", i / 2, std::string(senderMAC).c_str());
 
 		send_ARP_rep(pcap, myMAC, senderIP, senderMAC, targetIP);
 	}
