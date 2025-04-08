@@ -83,7 +83,7 @@ void send_ARP_req(pcap_t *pcap, Ip srcIP, Mac srcMAC, Ip dstIP) {
         }
 }
 
-Mac recv_ARP_rep(pcap_t *pcap, Ip srcIP, int repeat = 1000) {
+Mac recv_ARP_rep(pcap_t *pcap, Ip srcIP, Ip dstIP, int repeat = 1000) {
 
 	while (repeat--) {
 		struct pcap_pkthdr* header;
@@ -99,7 +99,8 @@ Mac recv_ARP_rep(pcap_t *pcap, Ip srcIP, int repeat = 1000) {
 		
 		if (ntohs(ARPpacket->eth_.type_) != EthHdr::Arp) continue;
 		if (ntohs(ARPpacket->arp_.op_) != ArpHdr::Reply) continue;
-		if (ARPpacket->arp_.sip_ != htonl(Ip(srcIP))) continue;
+		if (ntohl(ARPpacket->arp_.sip_) != Ip(srcIP)) continue;
+		if (ntohl(ARPpacket->arp_.tip_) != Ip(dstIP)) continue;
 
         	return ARPpacket->arp_.smac_;
 	}
@@ -169,7 +170,7 @@ int main(int argc, char* argv[]) {
 		Ip targetIP = Ip(argv[i+1]);
 
 		send_ARP_req(pcap, myIP, myMAC, senderIP);
-		senderMAC = recv_ARP_rep(pcap, senderIP);
+		senderMAC = recv_ARP_rep(pcap, senderIP, myIP);
 		printf("[-] sender%d MAC addr : %s\n", i / 2, std::string(senderMAC).c_str());
 
 		send_ARP_rep(pcap, myMAC, senderIP, senderMAC, targetIP);
