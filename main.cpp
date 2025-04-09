@@ -63,7 +63,7 @@ void send_ARP_req(pcap_t *pcap, Ip srcIP, Mac srcMAC, Ip dstIP) {
 	EthArpPacket packet;
 
         packet.eth_.dmac_ = Mac("FF:FF:FF:FF:FF:FF");
-        packet.eth_.smac_ = Mac(srcMAC);
+        packet.eth_.smac_ = srcMAC;
         packet.eth_.type_ = htons(EthHdr::Arp);
 
         packet.arp_.hrd_ = htons(ArpHdr::ETHER);
@@ -72,10 +72,10 @@ void send_ARP_req(pcap_t *pcap, Ip srcIP, Mac srcMAC, Ip dstIP) {
         packet.arp_.pln_ = Ip::Size;
         packet.arp_.op_ = htons(ArpHdr::Request);
 
-        packet.arp_.smac_ = Mac(srcMAC);
-        packet.arp_.sip_ = htonl(Ip(srcIP));
+        packet.arp_.smac_ = srcMAC;
+        packet.arp_.sip_ = htonl(srcIP);
         packet.arp_.tmac_ = Mac("00:00:00:00:00:00");
-        packet.arp_.tip_ = htonl(Ip(dstIP));
+        packet.arp_.tip_ = htonl(dstIP);
 
         int res = pcap_sendpacket(pcap, reinterpret_cast<const u_char*>(&packet), sizeof(EthArpPacket));
         if (res != 0) {
@@ -112,8 +112,8 @@ Mac recv_ARP_rep(pcap_t *pcap, Ip srcIP, Ip dstIP, int repeat = 1000) {
 void send_ARP_rep(pcap_t *pcap, Mac srcMAC, Ip dstIP, Mac dstMAC, Ip targetIP) {
         EthArpPacket packet;
 
-        packet.eth_.dmac_ = Mac(dstMAC);
-        packet.eth_.smac_ = Mac(srcMAC);
+        packet.eth_.dmac_ = dstMAC;
+        packet.eth_.smac_ = srcMAC;
         packet.eth_.type_ = htons(EthHdr::Arp);
 
         packet.arp_.hrd_ = htons(ArpHdr::ETHER);
@@ -122,10 +122,10 @@ void send_ARP_rep(pcap_t *pcap, Mac srcMAC, Ip dstIP, Mac dstMAC, Ip targetIP) {
         packet.arp_.pln_ = Ip::Size;
         packet.arp_.op_ = htons(ArpHdr::Reply);
 
-        packet.arp_.smac_ = Mac(srcMAC);
-        packet.arp_.sip_ = htonl(Ip(targetIP));
-        packet.arp_.tmac_ = Mac(dstMAC);
-        packet.arp_.tip_ = htonl(Ip(dstIP));
+        packet.arp_.smac_ = srcMAC;
+        packet.arp_.sip_ = htonl(targetIP);
+        packet.arp_.tmac_ = dstMAC;
+        packet.arp_.tip_ = htonl(dstIP);
 
         int res = pcap_sendpacket(pcap, reinterpret_cast<const u_char*>(&packet), sizeof(EthArpPacket));
         if (res != 0) {
@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
 
 	Mac myMAC;
 	Ip  myIP;
-
+	
 	if (get_MAC(dev, &myMAC)){
 		fprintf(stderr, "couldn't retrieve MAC address\n");
 		return EXIT_FAILURE;
